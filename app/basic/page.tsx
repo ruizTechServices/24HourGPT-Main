@@ -9,9 +9,9 @@ export default function BasicPage() {
     ];
 
     return (
-        <>  
+        <div className="h-screen flex flex-col">  
             <NavBar items={navItems} />
             <ChatInterface />
-        </>
+        </div>
     );
 }

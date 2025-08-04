@@ -114,18 +114,23 @@ export default function ChatInterface() {
   };
 
   return (
-    <main className="container mx-auto p-4 flex flex-col h-screen bg-gray-100 dark:bg-black">
-      <header className="mb-4">
-        <h1 className="text-2xl font-bold mb-2">24HourGPT</h1>
-        <div className="flex items-center space-x-2">
-          <Button onClick={handleNewChat} variant="outline">
-            <PlusCircle className="mr-2 h-4 w-4" /> New Chat
+    <main className="flex flex-col h-fit max-w-4xl mx-auto p-3 sm:p-4">
+      <header className="flex-shrink-0 mb-3 sm:mb-4">
+        {messages.length === 0 && (
+          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-center sm:text-left">24HourGPT</h1>
+        )}
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <Button onClick={handleNewChat} variant="outline" size="sm" className="flex-1 sm:flex-none min-w-0">
+            <PlusCircle className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">New Chat</span>
           </Button>
-          <Button onClick={handleDownload} variant="outline" disabled={messages.length === 0}>
-            <Download className="mr-2 h-4 w-4" /> Download
+          <Button onClick={handleDownload} variant="outline" size="sm" disabled={messages.length === 0} className="flex-1 sm:flex-none min-w-0">
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
           </Button>
-          <Button onClick={() => fileInputRef.current?.click()} variant="outline">
-            <Upload className="mr-2 h-4 w-4" /> Upload
+          <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="flex-1 sm:flex-none min-w-0">
+            <Upload className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Upload</span>
           </Button>
           <Input
             type="file"
@@ -135,13 +140,15 @@ export default function ChatInterface() {
             accept=".jsonl"
           />
         </div>
-        <p className="text-xs text-gray-500 mt-2">Current Chat ID: {chatId}</p>
+        <p className="text-xs text-gray-500 truncate">ID: {chatId}</p>
       </header>
       
-      <div className="flex-grow flex flex-col">
-        <ContextWindow messages={messages} onDeleteMessage={handleDeleteMessage} />
-        {error && <p className="text-red-500 text-sm my-2">{error}</p>}
-        <div className="mt-auto">
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 min-h-0">
+          <ContextWindow messages={messages} onDeleteMessage={handleDeleteMessage} />
+        </div>
+        {error && <p className="text-red-500 text-sm py-2 px-1">{error}</p>}
+        <div className="flex-shrink-0 pt-2">
           <InputEmbedder handleEmbedding={handleEmbedding} isLoading={isLoading} />
         </div>
       </div>
