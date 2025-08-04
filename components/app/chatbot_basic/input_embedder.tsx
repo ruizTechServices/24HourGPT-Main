@@ -6,41 +6,40 @@
 'use client';
 import EmbedInput from "@/components/app/special_components/embedInput";
 
+interface InputEmbedderProps {
+  handleEmbedding: (text: string) => Promise<void>;
+  isLoading: boolean;
+}
 
-export default function InputEmbedder() {
+export default function InputEmbedder({ handleEmbedding, isLoading }: InputEmbedderProps) {
   // Handles embedding submission coming from the EmbedInput client component
-  const handleEmbedding = async (text: string) => {
-    console.log("Input Embedder Output:", text);
+  // const handleEmbedding = async (text: string) => {
+  //   console.log("Input Embedder Output:", text);
 
-    try {
-      const response = await fetch('/api/embed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
+    // try {
+    //   const response = await fetch('/api/embed', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({ text }),
+    //   });
 
-      if (!response.ok) {
-        throw new Error('Failed to get embedding.');
-      }
+    //   if (!response.ok) {
+    //     throw new Error('Failed to get embedding.');
+    //   }
 
-      const { embedding } = await response.json();
-      console.log("Embedding:", embedding);
-      // TODO: Continue with the rest of the workflow using the embedding
-      // 2. Prepare embedding with metadata for storage
-      // 3. Send embedding to upsert API for vector database storage
-      // 4. Send text to chat API for response generation
-      // 5. Save text to jsonl file for logging/training data
-      // 6. Store the embedding in state variable for UI updates
-      // 7. Route response to chat context component for display
-      // 8. Done - complete workflow executed
-    } catch (error) {
-      console.error("Error getting embedding:", error);
-    };
+    //   const { embedding } = await response.json();
+    //   console.log("Embedding:", embedding);
+    //   //todo: submit to context window.
+    //   //currently `text` and `embedding` are the variables that are passed to the handleEmbedding function.
+    //   //todo: I want to send both text and embedding to context window.
+    //   //COntext window should handle the embedding and text and put it into JSONL format.
+    // } catch (error) {
+    //   console.error("Error getting embedding:", error);
+    // };
 
 
-  };
 
-  return <EmbedInput handleEmbedding={handleEmbedding} />;
+  return <EmbedInput handleEmbedding={handleEmbedding} isLoading={isLoading} />;
 }

@@ -5,58 +5,46 @@
 
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import DOMPurify from 'dompurify';
 
 interface EmbedInputProps {
-  handleEmbedding: (text: string) => void;
+  handleEmbedding: (text: string) => Promise<void>;
+  isLoading: boolean;
 }
 
-export default function EmbedInput({ handleEmbedding }: EmbedInputProps) {
+export default function EmbedInput({ handleEmbedding, isLoading }: EmbedInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const MAX_INPUT_LENGTH = 5500;
+  const [inputValue, setInputValue] = useState('');
 
-  const submitEmbedding = () => {
-    if (inputRef.current && inputRef.current.value.trim()) {
-      const trimmedValue = inputRef.current.value.trim();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isLoading) return;
 
-      // 1. Validate input length
-      if (trimmedValue.length > MAX_INPUT_LENGTH) {
-        // Optionally, provide feedback to the user about the length limit
-        console.error(`Input exceeds maximum length of ${MAX_INPUT_LENGTH} characters.`);
-        return;
-      }
-
-      // 2. Sanitize the input to prevent XSS
-      const sanitizedInput = DOMPurify.sanitize(trimmedValue);
-
-      // Pass the sanitized and validated input
-      handleEmbedding(sanitizedInput);
-      inputRef.current.value = '';
-    }
+    const sanitizedText = DOMPurify.sanitize(inputValue);
+    await handleEmbedding(sanitizedText);
+    setInputValue(''); // Clear input after submission
   };
 
   return (
-    <div className="flex flex-row items-center w-1/2">
+    <form onSubmit={handleSubmit} className="flex flex-row items-center w-1/2">
       <Input
         ref={inputRef}
-        placeholder="Input Query..."
-        maxLength={MAX_INPUT_LENGTH}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            submitEmbedding();
-          }
-        }}
+        type="text"
+        placeholder="Enter text to embed..."
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        disabled={isLoading}
+        className="flex-grow"
       />
-      <Button onClick={submitEmbedding}>Submit</Button>
-    </div>
+      <Button type="submit" disabled={isLoading || !inputValue.trim()}>
+        {isLoading ? 'Sending...' : 'Send'}
+      </Button>
+    </form>
   );
 }
-
-
-
 
 
 //# Example on how to use this component:
