@@ -1,4 +1,4 @@
-import ChatbotBasicContainer from "@/components/app/chatbot_basic/ChatbotBasicContainer";
+import InputEmbedder from "@/components/app/chatbot_basic/input_embedder";
 import NavBar from "@/components/app/landing_page/Navbar";
 // This page component is also a server component by default (no "use client").
 
@@ -11,7 +11,7 @@ export default function BasicPage() {
     return (
         <>
             <NavBar items={navItems} />
-            <ChatbotBasicContainer />
+            <InputEmbedder />
         </>
     );
 }
