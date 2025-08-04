@@ -29,7 +29,7 @@ export default function EmbedInput({ handleEmbedding, isLoading }: EmbedInputPro
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-row items-center w-1/2">
+    <form onSubmit={handleSubmit} className="flex flex-row items-center w-full">
       <Input
         ref={inputRef}
         type="text"
