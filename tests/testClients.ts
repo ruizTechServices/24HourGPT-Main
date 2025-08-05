@@ -12,6 +12,7 @@ import huggingfaceClient from '../lib/clients/huggingface/client'
 import xaiClient from '../lib/clients/xai/client'
 import pineconeClient from '../lib/clients/pinecone/client'
 import { createClient as supabaseClient } from '../lib/clients/supabase/client'
+import squareClient from '../lib/clients/square/client'
 
 const tests: Array<{ name: string; client: any; keyEnv: string }> = [
     { name: 'Google (Gemini)', client: googleClient, keyEnv: 'GEMINI_API_KEY' },
@@ -22,6 +23,7 @@ const tests: Array<{ name: string; client: any; keyEnv: string }> = [
     { name: 'xAI', client: xaiClient, keyEnv: 'XAI_API_KEY' },
     { name: 'Pinecone', client: pineconeClient, keyEnv: 'PINECONE_API_KEY' },
     { name: 'Supabase', client: supabaseClient, keyEnv: 'SUPABASE_API_KEY' },
+    { name: 'Square', client: squareClient, keyEnv: 'SQUARE_ACCESS_TOKEN' },
 ]
 
 console.log('🧠 Unified client initialization test')
