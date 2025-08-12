@@ -2,8 +2,6 @@
 
 import NavBar, { NavItem } from "../components/app/landing_page/Navbar";
 import { useSupabaseSession } from "@/hooks/useSupabaseSession"
-import Hero from "../components/app/landing_page/Hero"
-import Description from "../components/app/landing_page/description"
 
 export default function Home() {
   const session = useSupabaseSession();
@@ -17,8 +15,6 @@ export default function Home() {
   return (
     <div className="w-full h-[300vh] overflow-hidden">
       <NavBar items={items} />
-      <Hero />
-      <Description />
     </div>
   )
 }
