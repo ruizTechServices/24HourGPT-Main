@@ -1,125 +1,104 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { createClient } from '@/lib/clients/supabase/server';
 import { NextResponse, NextRequest } from 'next/server';
-
-const dataDir = path.join(process.cwd(), 'data');
-
-// Helper to get the file path for a given chat ID and prevent directory traversal
-const getFilePath = (chatId: string) => {
-  const safeChatId = path.basename(chatId);
-  if (!safeChatId || safeChatId === '.' || safeChatId === '..') {
-    throw new Error('Invalid chatId');
-  }
-  return path.join(dataDir, `${safeChatId}.jsonl`);
-};
-
-// Ensure the data directory exists
-async function ensureDataDirExists() {
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-}
+import { cookies } from 'next/headers';
 
 // GET: Fetch all messages for a given chat ID
 export async function GET(request: NextRequest) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   const chatId = request.nextUrl.searchParams.get('chatId');
   if (!chatId) {
     return NextResponse.json({ message: 'chatId is required' }, { status: 400 });
   }
 
   try {
-    const filePath = getFilePath(chatId);
-    await fs.access(filePath);
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const lines = fileContent.trim().split('\n').filter(line => line);
-    const messages = lines.map(line => JSON.parse(line));
+    const { data: messages, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
     return NextResponse.json(messages);
   } catch (error) {
-    // If file doesn't exist, it's a new chat. Return empty array.
-    return NextResponse.json([]);
+    console.error('Error fetching chat messages:', error);
+    return NextResponse.json({ message: 'Error fetching chat messages' }, { status: 500 });
   }
 }
 
 // POST: Add a new message to a chat
 export async function POST(request: NextRequest) {
-  await ensureDataDirExists();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   const chatId = request.nextUrl.searchParams.get('chatId');
   if (!chatId) {
     return NextResponse.json({ message: 'chatId is required' }, { status: 400 });
   }
 
   try {
-    const newMessage = await request.json();
-    const messageWithId = {
-      ...newMessage,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
+    const { sender, content } = await request.json();
 
-    const jsonlLine = JSON.stringify(messageWithId) + '\n';
-    const filePath = getFilePath(chatId);
+    const { data: newMessage, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        user_id: user.id,
+        chat_id: chatId,
+        sender,
+        content,
+      })
+      .select()
+      .single();
 
-    await fs.appendFile(filePath, jsonlLine);
-    return NextResponse.json(messageWithId, { status: 201 });
+    if (error) throw error;
+
+    return NextResponse.json(newMessage, { status: 201 });
   } catch (error) {
-    console.error('Error writing to context file:', error);
-    return NextResponse.json({ message: 'Error writing to context file' }, { status: 500 });
+    console.error('Error creating chat message:', error);
+    return NextResponse.json({ message: 'Error creating chat message' }, { status: 500 });
   }
 }
 
-// PUT: Upload and overwrite a chat history file
-export async function PUT(request: NextRequest) {
-    await ensureDataDirExists();
-    const chatId = request.nextUrl.searchParams.get('chatId');
-    if (!chatId) {
-        return NextResponse.json({ message: 'chatId is required' }, { status: 400 });
-    }
-
-    try {
-        const filePath = getFilePath(chatId);
-        const body = await request.text();
-
-        // Basic validation for JSONL format
-        const lines = body.trim().split('\n');
-        for (const line of lines) {
-            JSON.parse(line); // Will throw an error if a line is not valid JSON
-        }
-
-        await fs.writeFile(filePath, body);
-        return NextResponse.json({ message: 'File uploaded successfully' }, { status: 200 });
-    } catch (error) {
-        console.error('Error uploading file:', error);
-        return NextResponse.json({ message: 'Invalid JSONL format or failed to write file' }, { status: 400 });
-    }
-}
-
-
-// DELETE: Deletes a message from a chat
+// DELETE: Deletes all messages for a given chat ID
 export async function DELETE(request: NextRequest) {
-    const chatId = request.nextUrl.searchParams.get('chatId');
-    const messageId = request.nextUrl.searchParams.get('messageId');
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
 
-    if (!chatId || !messageId) {
-        return NextResponse.json({ message: 'chatId and messageId are required' }, { status: 400 });
-    }
+  if (!user) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+  
+  const chatId = request.nextUrl.searchParams.get('chatId');
+  if (!chatId) {
+    return NextResponse.json({ message: 'chatId is required' }, { status: 400 });
+  }
 
-    try {
-        const filePath = getFilePath(chatId);
-        await fs.access(filePath);
-        const fileContent = await fs.readFile(filePath, 'utf-8');
-        const lines = fileContent.trim().split('\n').filter(line => line);
-        const messages = lines.map(line => JSON.parse(line));
+  try {
+    const { error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('chat_id', chatId);
 
-        const filteredMessages = messages.filter(msg => msg.id !== messageId);
+    if (error) throw error;
 
-        const newFileContent = filteredMessages.map(msg => JSON.stringify(msg)).join('\n') + (filteredMessages.length > 0 ? '\n' : '');
-        await fs.writeFile(filePath, newFileContent);
-
-        return NextResponse.json({ message: 'Message deleted successfully' }, { status: 200 });
-    } catch (error) {
-        console.error('Error deleting message:', error);
-        return NextResponse.json({ message: 'Error deleting message' }, { status: 500 });
-    }
+    return NextResponse.json({ message: 'Chat history deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting chat history:', error);
+    return NextResponse.json({ message: 'Error deleting chat history' }, { status: 500 });
+  }
 }
